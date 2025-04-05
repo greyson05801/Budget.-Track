@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Budget Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+            background-color: #f5f7fa;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        .auth-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .auth-form {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 45%;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .input-section {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            transition: border 0.3s;
+        }
+        input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 10px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button.secondary {
+            background-color: #2ecc71;
+        }
+        button.secondary:hover {
+            background-color: #27ae60;
+        }
+        button.tertiary {
+            background-color: #9b59b6;
+        }
+        button.tertiary:hover {
+            background-color: #8e44ad;
+        }
+        button.logout-btn {
+            background-color: #e74c3c;
+            width: auto;
+            padding: 8px 15px;
+            font-size: 14px;
+            margin-left: 15px;
+        }
+        button.logout-btn:hover {
+            background-color: #c0392b;
+        }
+        .user-info {
+            text-align: right;
+            margin-bottom: 25px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 14px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .notes-cell {
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #e8f4f8 !important;
+        }
+        .percentage-cell {
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        .history-section {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 30px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .history-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .history-date {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .history-amount {
+            color: #27ae60;
+            font-weight: 600;
+        }
+        .budget-status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .under-budget {
+            background-color: #d5f5e3;
+            color: #27ae60;
+        }
+        .on-budget {
+            background-color: #fef9e7;
+            color: #f39c12;
+        }
+        .over-budget {
+            background-color: #fadbd8;
+            color: #e74c3c;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .nav-buttons button {
+            width: 48%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div class="page active" id="loginPage">
+        <h1>Welcome to Budget Tracker</h1>
+        
+        <div class="auth-container">
+            <div class="auth-form">
+                <h2>Login</h2>
+                <label for="loginUsername">Username:</label>
+                <input type="text" id="loginUsername" placeholder="Your username">
+                
+                <label for="loginPassword">Password:</label>
+                <input type="password" id="loginPassword" placeholder="Your password">
+                
+                <button onclick="login()">Login</button>
+                <p style="text-align: center; margin-top: 15px;">Don't have an account? <a href="#" onclick="showRegister()">Register</a></p>
+            </div>
+            
+            <div class="auth-form" id="registerForm" style="display: none;">
+                <h2>Register</h2>
+                <label for="regUsername">Username:</label>
+                <input type="text" id="regUsername" placeholder="Choose a username">
+                
+                <label for="regPassword">Password:</label>
+                <input type="password" id="regPassword" placeholder="Choose a password">
+                
+                <label for="regEmail">Email (optional):</label>
+                <input type="text" id="regEmail" placeholder="Your email">
+                
+                <button onclick="register()">Register</button>
+                <p style="text-align: center; margin-top: 15px;">Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Tracker Page -->
+    <div class="page" id="budgetPage">
+        <div class="user-info">
+            Welcome, <span id="usernameDisplay"></span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+        
+        <h1>Smart Budget Tracker</h1>
+        
+        <div class="input-section">
+            <label for="monthlyIncome">Enter Your Monthly Income (TZS):</label>
+            <input type="number" id="monthlyIncome" placeholder="e.g. 300000">
+            
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                <label style="min-width: 120px; margin-bottom: 0;">Rent Amount (TZS):</label>
+                <input type="number" id="rentAmount" placeholder="e.g. 50000" style="flex: 1; margin-bottom: 0;">
+            </div>
+            
+            <button onclick="calculateBudget()">Calculate Budget</button>
+            <button class="secondary" onclick="showAdvice()">Get Financial Advice</button>
+        </div>
+        
+        <table id="budgetTable">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Amount (TZS)</th>
+                    <th>% of Budget</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Rent/Accommodation</td>
+                    <td id="rentAmountDisplay">0</td>
+                    <td id="rentPercent" class="percentage-cell">0%</td>
+                    <td class="notes-cell">If you pay rent, prioritize it first.</td>
+                </tr>
+                <tr>
+                    <td>Food & Essentials</td>
+                    <td id="foodAmount">0</td>
+                    <td id="foodPercent" class="percentage-cell">0%</td>
+                    <td class="notes-cell">Focus on home-cooked meals to save costs.</td>
+                </tr>
+                <tr>
+                    <td>Transport</td>
+                    <td id="transportAmount">0</td>
+                    <td id="transportPercent" class="percentage-cell">0%</td>
+                    <td class="notes-cell">If you use public transport, keep this minimal.</td>
+                </tr>
+                <tr>
+                    <td>Savings & Investment</td>
+                    <td id="savingsAmount">0</td>
+                    <td id="savingsPercent" class="percentage-cell">0%</td>
+                    <td class="notes-cell">Even small savings help in the long run.</td>
+                </tr>
+                <tr>
+                    <td>Side Hustle/Skill Development</td>
+                    <td id="sideHustleAmount">0</td>
+                    <td id="sideHustlePercent" class="percentage-cell">0%</td>
+                    <td class="notes-cell">Invest in learning coding or a small business.</td>
+                </tr>
+                <tr>
+                    <td>Emergency Fund</td>
+                    <td id="emergencyAmount">0</td>
+                    <td id="emergencyPercent" class="percentage-cell">0%</td>
+                    <td class="notes-cell">Just in case of unexpected costs.</td>
+                </tr>
+                <tr>
+                    <td>Personal & Social Life</td>
+                    <td id="personalAmount">0</td>
+                    <td id="personalPercent" class="percentage-cell">0%</td>
+                    <td class="notes-cell">Entertainment, data, or small treats.</td>
+                </tr>
+                <tr class="total-row">
+                    <td>Total</td>
+                    <td id="totalAmount">0</td>
+                    <td id="totalPercent" class="percentage-cell">0%</td>
+                    <td class="notes-cell"></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="history-section" id="historySection">
+            <h2>Your Budget History</h2>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <script>
+        // Simple user database (in a real app, this would be server-side)
+        const users = JSON.parse(localStorage.getItem('budgetTrackerUsers')) || [];
+        let currentUser = null;
+
+        function showRegister() {
+            document.getElementById('registerForm').style.display = 'block';
+            document.querySelector('#loginPage .auth-form').style.display = 'none';
+        }
+
+        function showLogin() {
+            document.getElementById('registerForm').style.display = 'none';
+            document.querySelector('#loginPage .auth-form').style.display = 'block';
+        }
+
+        function register() {
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            
+            if (!username || !password) {
+                alert('Username and password are required');
+                return;
+            }
+            
+            // Check if user already exists
+            if (users.some(user => user.username === username)) {
+                alert('Username already exists');
+                return;
+            }
+            
+            // Add new user
+            users.push({ 
+                username, 
+                password, 
+                email, 
+                budgets: [],
+                actualSpending: [] 
+            });
+            localStorage.setItem('budgetTrackerUsers', JSON.stringify(users));
+            
+            alert('Registration successful! Please login.');
+            document.getElementById('regUsername').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regEmail').value = '';
+            showLogin();
+        }
+        
+        function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            
+            const user = users.find(user => user.username === username && user.password === password);
+            
+            if (user) {
+                currentUser = user;
+                document.getElementById('usernameDisplay').textContent = username;
+                
+                // Switch to budget page
+                document.getElementById('loginPage').classList.remove('active');
+                document.getElementById('budgetPage').classList.add('active');
+                
+                // Load user data
+                loadHistory();
+            } else {
+                alert('Invalid username or password');
+            }
+        }
+        
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginPage').classList.add('active');
+            document.getElementById('budgetPage').classList.remove('active');
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+        
+        function calculateBudget() {
+            if (!currentUser) {
+                alert('Please login first');
+                return;
+            }
+            
+            const income = parseFloat(document.getElementById('monthlyIncome').value);
+            const rent = parseFloat(document.getElementById('rentAmount').value) || 0;
+            
+            if (isNaN(income) || income <= 0) {
+                alert('Please enter a valid monthly income amount');
+                return;
+            }
+            
+            // Calculate rent percentage
+            const rentPercent = (rent / income) * 100;
+            
+            // Calculate remaining income after rent
+            const remainingIncome = income - rent;
+            
+            // Calculate amounts based on percentages from the example (applied to remaining income)
+            const foodAmount = remainingIncome * 0.60;
+            const transportAmount = remainingIncome * 0.10;
+            const savingsAmount = remainingIncome * 0.10;
+            const sideHustleAmount = remainingIncome * 0.10;
+            const emergencyAmount = remainingIncome * 0.05;
+            const personalAmount = remainingIncome * 0.05;
+            
+            // Update the table
+            document.getElementById('rentAmountDisplay').textContent = rent.toFixed(2);
+            document.getElementById('rentPercent').textContent = rentPercent.toFixed(1) + '%';
+            
+            document.getElementById('foodAmount').textContent = foodAmount.toFixed(2);
+            document.getElementById('foodPercent').textContent = ((foodAmount / income) * 100).toFixed(1) + '%';
+            
+            document.getElementById('transportAmount').textContent = transportAmount.toFixed(2);
+            document.getElementById('transportPercent').textContent = ((transportAmount / income) * 100).toFixed(1) + '%';
+            
+            document.getElementById('savingsAmount').textContent = savingsAmount.toFixed(2);
+            document.getElementById('savingsPercent').textContent = ((savingsAmount / income) * 100).toFixed(1) + '%';
+            
+            document.getElementById('sideHustleAmount').textContent = sideHustleAmount.toFixed(2);
+            document.getElementById('sideHustlePercent').textContent = ((sideHustleAmount / income) * 100).toFixed(1) + '%';
+            
+            document.getElementById('emergencyAmount').textContent = emergencyAmount.toFixed(2);
+            document.getElementById('emergencyPercent').textContent = ((emergencyAmount / income) * 100).toFixed(1) + '%';
+            
+            document.getElementById('personalAmount').textContent = personalAmount.toFixed(2);
+            document.getElementById('personalPercent').textContent = ((personalAmount / income) * 100).toFixed(1) + '%';
+            
+            // Calculate total
+            const totalAmount = rent + foodAmount + transportAmount + savingsAmount + 
+                              sideHustleAmount + emergencyAmount + personalAmount;
+            const totalPercent = ((totalAmount / income) * 100).toFixed(1);
+            
+            document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
+            document.getElementById('totalPercent').textContent = totalPercent + '%';
+            
+            // Show the budget table
+            document.getElementById('budgetTable').style.display = 'table';
+            
+            // Save budget to user's history
+            const budget = {
+                date: new Date().toLocaleDateString(),
+                income,
+                allocations: {
+                    rent,
+                    food: foodAmount,
+                    transport: transportAmount,
+                    savings: savingsAmount,
+                    sideHustle: sideHustleAmount,
+                    emergency: emergencyAmount,
+                    personal: personalAmount
+                }
+            };
+            
+            currentUser.budgets.push(budget);
+            localStorage.setItem('budgetTrackerUsers', JSON.stringify(users));
+            
+            // Prompt for actual spending
+            setTimeout(() => {
+                if (confirm('Would you like to enter your actual spending for last month?')) {
+                    enterActualSpending(income);
+                }
+            }, 1000);
+            
+            loadHistory();
+        }
+        
+        function enterActualSpending(budgetedIncome) {
+            let rentSpent = parseFloat(prompt('Enter actual rent spending (TZS):', '0')) || 0;
+            let foodSpent = parseFloat(prompt('Enter actual food spending (TZS):', '0')) || 0;
+            let transportSpent = parseFloat(prompt('Enter actual transport spending (TZS):', '0')) || 0;
+            let savingsSpent = parseFloat(prompt('Enter actual savings amount (TZS):', '0')) || 0;
+            let sideHustleSpent = parseFloat(prompt('Enter actual skill development spending (TZS):', '0')) || 0;
+            let emergencySpent = parseFloat(prompt('Enter actual emergency fund contribution (TZS):', '0')) || 0;
+            let personalSpent = parseFloat(prompt('Enter actual personal/social spending (TZS):', '0')) || 0;
+            
+            const totalSpent = rentSpent + foodSpent + transportSpent + savingsSpent + 
+                             sideHustleSpent + emergencySpent + personalSpent;
+            
+            // Get the last budget to compare
+            const lastBudget = currentUser.budgets[currentUser.budgets.length - 1];
+            
+            // Calculate budget variances
+            const rentVariance = lastBudget.allocations.rent - rentSpent;
+            const foodVariance = lastBudget.allocations.food - foodSpent;
+            const transportVariance = lastBudget.allocations.transport - transportSpent;
+            const savingsVariance =lastBudget.allocations.savings - savingsSpent;
+            const sideHustleVariance = lastBudget.allocations.sideHustle - sideHustleSpent;
+            const emergencyVariance = lastBudget.allocations.emergency - emergencySpent;
+            const personalVariance = lastBudget.allocations.personal - personalSpent;
+            
+            const totalVariance = lastBudget.income - totalSpent;
+            
+            // Determine overall budget status
+            let budgetStatus = '';
+            let statusClass = '';
+            
+            if (totalVariance > (lastBudget.income * 0.05)) {
+                budgetStatus = 'Under Budget';
+                statusClass = 'under-budget';
+            } else if (totalVariance < -(lastBudget.income * 0.05)) {
+                budgetStatus = 'Over Budget';
+                statusClass = 'over-budget';
+            } else {
+                budgetStatus = 'On Budget';
+                statusClass = 'on-budget';
+            }
+            
+            // Save actual spending
+            currentUser.actualSpending.push({
+                date: new Date().toLocaleDateString(),
+                amounts: {
+                    rent: rentSpent,
+                    food: foodSpent,
+                    transport: transportSpent,
+                    savings: savingsSpent,
+                    sideHustle: sideHustleSpent,
+                    emergency: emergencySpent,
+                    personal: personalSpent
+                },
+                total: totalSpent,
+                status: budgetStatus,
+                statusClass: statusClass,
+                variances: {
+                    rent: rentVariance,
+                    food: foodVariance,
+                    transport: transportVariance,
+                    savings: savingsVariance,
+                    sideHustle: sideHustleVariance,
+                    emergency: emergencyVariance,
+                    personal: personalVariance,
+                    total: totalVariance
+                }
+            });
+            
+            localStorage.setItem('budgetTrackerUsers', JSON.stringify(users));
+            loadHistory();
+        }
+        
+        function loadHistory() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            
+            if (!currentUser || currentUser.budgets.length === 0) {
+                historyList.innerHTML = '<p>No budget history yet.</p>';
+                return;
+            }
+            
+            // Show last 3 budgets
+            const recentBudgets = currentUser.budgets.slice(-3).reverse();
+            
+            recentBudgets.forEach((budget, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                // Check if there's corresponding actual spending
+                const actualSpending = currentUser.actualSpending.find(
+                    item => item.date === budget.date
+                );
+                
+                if (actualSpending) {
+                    historyItem.innerHTML = `
+                        <div>
+                            <span class="history-date">${budget.date}</span>
+                            <span class="budget-status ${actualSpending.statusClass}">${actualSpending.status}</span>
+                        </div>
+                        <div>
+                            <span class="history-amount">${budget.income.toFixed(2)} TZS</span>
+                        </div>
+                    `;
+                } else {
+                    historyItem.innerHTML = `
+                        <div>
+                            <span class="history-date">${budget.date}</span>
+                        </div>
+                        <div>
+                            <span class="history-amount">${budget.income.toFixed(2)} TZS</span>
+                        </div>
+                    `;
+                }
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        function showAdvice() {
+            if (!currentUser) {
+                alert('Please login first');
+                return;
+            }
+            
+            const income = parseFloat(document.getElementById('monthlyIncome').value);
+            
+            if (isNaN(income) || income <= 0) {
+                alert('Please enter your monthly income first');
+                return;
+            }
+            
+            let advice = '';
+            
+            if (income < 300000) {
+                advice = `
+                    <h3>Income Below 300,000 TZS</h3>
+                    <ul>
+                        <li><strong>Prioritize essentials:</strong> Focus on food, shelter, and basic transportation</li>
+                        <li><strong>Minimize rent costs:</strong> Consider shared accommodation or more affordable areas</li>
+                        <li><strong>Limit discretionary spending:</strong> Reduce entertainment and social expenses</li>
+                        <li><strong>Explore additional income:</strong> Look for side gigs or part-time work</li>
+                        <li><strong>Small savings:</strong> Try to save at least 5% of your income</li>
+                    </ul>
+                `;
+            } else if (income <= 600000) {
+                advice = `
+                    <h3>Income 300,000 - 600,000 TZS</h3>
+                    <ul>
+                        <li><strong>Balance essentials and savings:</strong> Aim for 60% essentials, 20% savings, 20% discretionary</li>
+                        <li><strong>Control housing costs:</strong> Keep rent below 25% of your income</li>
+                        <li><strong>Build emergency fund:</strong> Save at least 10% of your income</li>
+                        <li><strong>Invest in skills:</strong> Allocate 5-10% for education/skill development</li>
+                        <li><strong>Plan for future:</strong> Consider long-term savings and investments</li>
+                    </ul>
+                `;
+            } else {
+                advice = `
+                    <h3>Income Above 600,000 TZS</h3>
+                    <ul>
+                        <li><strong>Maximize savings:</strong> Aim to save 20-30% of your income</li>
+                        <li><strong>Invest wisely:</strong> Consider diversified investments beyond savings</li>
+                        <li><strong>Quality housing:</strong> You can afford better accommodation but keep below 30% of income</li>
+                        <li><strong>Professional development:</strong> Invest in courses or certifications</li>
+                        <li><strong>Financial planning:</strong> Consider consulting a financial advisor</li>
+                    </ul>
+                `;
+            }
+            
+            alert('Financial Advice:\n\n' + advice.replace(/<[^>]*>/g, ''));
+        }
+    </script>
+</body>
+</html>
